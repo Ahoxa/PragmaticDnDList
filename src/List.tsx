@@ -6,7 +6,12 @@ import {
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 import { pointerOutsideOfPreview } from "@atlaskit/pragmatic-drag-and-drop/element/pointer-outside-of-preview";
-import { attachClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import {
+  type Edge,
+  attachClosestEdge,
+  extractClosestEdge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
 import invariant from "tiny-invariant";
 import { RiDraggable } from "react-icons/ri";
 
@@ -19,6 +24,7 @@ type ListProps = {
 
 export const List = (props: ListProps) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
 
   const itemRef = useRef<HTMLDivElement | null>(null);
   const dragHandleRef = useRef<HTMLDivElement | null>(null);
@@ -67,6 +73,24 @@ export const List = (props: ListProps) => {
             allowedEdges: ["top", "bottom"],
           });
         },
+        onDragEnter: ({ self }) => {
+          const currentEdge = extractClosestEdge(self.data);
+          setClosestEdge(currentEdge);
+        },
+        onDrag: ({ self }) => {
+          const currentEdge = extractClosestEdge(self.data);
+          setClosestEdge(currentEdge);
+        },
+        onDragLeave: () => setClosestEdge(null),
+        onDrop: () => setClosestEdge(null),
+        canDrop: (arg) => {
+          console.log(arg.input);
+          
+          if (arg.source.data.id === props.id) {
+            return false;
+          }
+          return true;
+        },
       })
     );
   }, [props.id]);
@@ -74,10 +98,11 @@ export const List = (props: ListProps) => {
   return (
     <div
       ref={itemRef}
-      className={`flex items-center p-4 border-2 border-green-200 ${
+      className={`relative flex items-center p-4 border-2 border-green-200 ${
         isDragging && "opacity-20"
       }`}
     >
+      {closestEdge && <DropIndicator edge={closestEdge} />}
       <div ref={dragHandleRef} className="cursor-grab p-2">
         <RiDraggable size={"22px"} />
       </div>
