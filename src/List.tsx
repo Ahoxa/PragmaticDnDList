@@ -1,7 +1,12 @@
 import { useEffect, useState, useRef } from "react";
-import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import {
+  draggable,
+  dropTargetForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 import { pointerOutsideOfPreview } from "@atlaskit/pragmatic-drag-and-drop/element/pointer-outside-of-preview";
+import { attachClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import invariant from "tiny-invariant";
 import { RiDraggable } from "react-icons/ri";
 
@@ -24,29 +29,47 @@ export const List = (props: ListProps) => {
     invariant(el);
     invariant(dragHandleEl);
 
-    draggable({
-      element: el,
-      dragHandle: dragHandleEl,
-      onDragStart() {
-        setIsDragging(true);
-      },
-      onDrag() {
-        setIsDragging(true);
-      },
-      onDrop() {
-        setIsDragging(false);
-      },
-      onGenerateDragPreview({ nativeSetDragImage }) {
-        setCustomNativeDragPreview({
-          nativeSetDragImage,
-          getOffset: pointerOutsideOfPreview({ x: "16px", y: "16px" }),
-          render({ container }) {
-            container.innerHTML = `${props.title}`;
-          },
-        });
-      },
-    });
-  }, []);
+    combine(
+      draggable({
+        element: el,
+        dragHandle: dragHandleEl,
+        getInitialData() {
+          return { id: props.id };
+        },
+        onDragStart() {
+          setIsDragging(true);
+        },
+        onDrag() {
+          setIsDragging(true);
+        },
+        onDrop() {
+          setIsDragging(false);
+        },
+        onGenerateDragPreview({ nativeSetDragImage }) {
+          setCustomNativeDragPreview({
+            nativeSetDragImage,
+            getOffset: pointerOutsideOfPreview({ x: "16px", y: "16px" }),
+            render({ container }) {
+              container.innerHTML = `${props.title}`;
+            },
+          });
+        },
+      }),
+      dropTargetForElements({
+        element: el,
+        getData: ({ input, element }) => {
+          const data = {
+            id: props.id,
+          };
+          return attachClosestEdge(data, {
+            input,
+            element,
+            allowedEdges: ["top", "bottom"],
+          });
+        },
+      })
+    );
+  }, [props.id]);
 
   return (
     <div
