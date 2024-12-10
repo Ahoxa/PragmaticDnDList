@@ -72,7 +72,7 @@ function App() {
 
   return (
     <div className="w-1/2">
-      <h1 className="font-bold text-4xl  w-full mb-2">Undraggable List</h1>
+      <h1 className="font-bold text-4xl  w-full mb-2">Draggable List</h1>
       <div className="flex flex-col gap-y-1">
         {listItem.map((item) => (
           <List
